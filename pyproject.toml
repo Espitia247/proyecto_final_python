@@ -1,0 +1,11 @@
+[project]
+name = "gestion_matriculas"
+version = "0.1.0"
+dependencies = [
+    "rich",
+    "pytest",
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 88
