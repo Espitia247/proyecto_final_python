@@ -19,11 +19,10 @@ def cargar_cursos() -> List[Dict[str, Any]]:
         with open(FILE_PATH, mode='r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
-                # TODO (Mayerly): Convertir créditos a entero
-                # Usa un try-except por si el dato en el CSV está malo
                 try:
+                    # Convertir créditos a entero
                     row['creditos'] = int(row['creditos'])
-                except ValueError:
+                except (ValueError, TypeError):
                     print(f"Advertencia: 'creditos' no válido para {row['id_curso']}. Se usará 0.")
                     row['creditos'] = 0
                 cursos.append(row)
@@ -45,14 +44,11 @@ def guardar_cursos(cursos: List[Dict[str, Any]]) -> None:
     """
     try:
         with open(FILE_PATH, mode='w', newline='', encoding='utf-8') as file:
-            if not cursos:
-                fieldnames = ["id_curso", "nombre_curso", "creditos"]
-            else:
-                fieldnames = cursos[0].keys()
-
+            fieldnames = ["id_curso", "nombre_curso", "creditos"]
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(cursos)
+            if cursos:
+                writer.writerows(cursos)
     except IOError as e:
         print(f"Error al guardar cursos en el archivo: {e}")
     except Exception as e:
@@ -70,9 +66,10 @@ def buscar_curso_por_id(cursos: List[Dict[str, Any]], id_curso: str) -> Optional
     Returns:
         Optional[Dict[str, Any]]: El diccionario del curso o None si no se encuentra.
     """
-    # TODO (Mayerly): Implementar lógica de búsqueda
-    # Idéntico a la función de Santiago, pero para 'id_curso'.
-    pass
+    for curso in cursos:
+        if curso["id_curso"] == id_curso:
+            return curso
+    return None
 
 
 def crear_curso(cursos: List[Dict[str, Any]], nombre_curso: str, creditos: int) -> Dict[str, Any]:
@@ -88,16 +85,23 @@ def crear_curso(cursos: List[Dict[str, Any]], nombre_curso: str, creditos: int) 
     Returns:
         Dict[str, Any]: El nuevo curso.
     """
-    # TODO (Mayerly): Implementar lógica de creación
-    # 1. Generar un nuevo ID. Ej: "C" + str(len(cursos) + 1).zfill(3) -> C001
-    # 2. Crear el diccionario:
-    #    nuevo_curso = {
-    #        "id_curso": nuevo_id_formateado,
-    #        "nombre_curso": nombre_curso,
-    #        "creditos": creditos
-    #    }
-    # 3. Retornar nuevo_curso
-    pass
+    if not cursos:
+        nuevo_id_num = 1
+    else:
+        try:
+            ultimo_id = cursos[-1]["id_curso"]
+            nuevo_id_num = int(ultimo_id.replace("C", "")) + 1
+        except Exception:
+            nuevo_id_num = len(cursos) + 1
+
+    nuevo_id_formateado = f"C{str(nuevo_id_num).zfill(3)}"
+
+    nuevo_curso = {
+        "id_curso": nuevo_id_formateado,
+        "nombre_curso": nombre_curso,
+        "creditos": creditos
+    }
+    return nuevo_curso
 
 
 def actualizar_curso(curso: Dict[str, Any], nombre_curso: str, creditos: int) -> None:
@@ -106,13 +110,13 @@ def actualizar_curso(curso: Dict[str, Any], nombre_curso: str, creditos: int) ->
 
     Args:
         curso (Dict[str, Any]): El diccionario del curso a modificar.
-        nombre_curso (str): El nuevo nombre.
-        creditos (int): El nuevo número de créditos.
+        nombre_curso (str): El nuevo nombre (o "" para no cambiar).
+        creditos (int): El nuevo número de créditos (o -1 para no cambiar).
     """
-    # TODO (Mayerly): Implementar lógica de actualización
-    # curso["nombre_curso"] = nombre_curso
-    # curso["creditos"] = creditos
-    pass
+    if nombre_curso:
+        curso["nombre_curso"] = nombre_curso
+    if creditos >= 0:  # Usamos -1 como señal para no actualizar
+        curso["creditos"] = creditos
 
 
 def eliminar_curso(cursos: List[Dict[str, Any]], id_curso: str) -> bool:
@@ -126,11 +130,10 @@ def eliminar_curso(cursos: List[Dict[str, Any]], id_curso: str) -> bool:
     Returns:
         bool: True si se eliminó, False si no se encontró.
     """
-    # TODO (Mayerly): Implementar lógica de eliminación
-    # 1. Llama a buscar_curso_por_id() para encontrar el curso.
-    # 2. Si lo encuentras (no es None):
-    #    cursos.remove(curso_encontrado)
-    #    Retorna True
-    # 3. Si no lo encuentras (es None):
-    #    Retorna False
-    pass
+    curso_a_eliminar = buscar_curso_por_id(cursos, id_curso)
+
+    if curso_a_eliminar:
+        cursos.remove(curso_a_eliminar)
+        return True
+
+    return False

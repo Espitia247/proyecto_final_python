@@ -18,7 +18,6 @@ def cargar_estudiantes() -> List[Dict[str, Any]]:
             reader = csv.DictReader(file)
             return list(reader)
     except FileNotFoundError:
-        # Si el archivo no existe, retornamos una lista vacía
         return []
     except Exception as e:
         print(f"Error inesperado al cargar estudiantes: {e}")
@@ -35,15 +34,11 @@ def guardar_estudiantes(estudiantes: List[Dict[str, Any]]) -> None:
     """
     try:
         with open(FILE_PATH, mode='w', newline='', encoding='utf-8') as file:
-            if not estudiantes:
-                # Si no hay estudiantes, solo escribimos las cabeceras
-                fieldnames = ["id_estudiante", "nombre", "carrera"]
-            else:
-                fieldnames = estudiantes[0].keys()
-
+            fieldnames = ["id_estudiante", "nombre", "carrera"]
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(estudiantes)
+            if estudiantes:
+                writer.writerows(estudiantes)
     except IOError as e:
         print(f"Error al guardar estudiantes en el archivo: {e}")
     except Exception as e:
@@ -61,12 +56,10 @@ def buscar_estudiante_por_id(estudiantes: List[Dict[str, Any]], id_estudiante: s
     Returns:
         Optional[Dict[str, Any]]: El diccionario del estudiante o None si no se encuentra.
     """
-    # TODO (Santiago): Implementar lógica de búsqueda
-    # Iterar sobre la lista 'estudiantes'
-    # Si encuentras un diccionario donde 'id_estudiante' coincida,
-    # retorna ese diccionario.
-    # Si terminas el bucle sin encontrarlo, retorna None.
-    pass
+    for estudiante in estudiantes:
+        if estudiante["id_estudiante"] == id_estudiante:
+            return estudiante
+    return None
 
 
 def crear_estudiante(estudiantes: List[Dict[str, Any]], nombre: str, carrera: str) -> Dict[str, Any]:
@@ -82,17 +75,26 @@ def crear_estudiante(estudiantes: List[Dict[str, Any]], nombre: str, carrera: st
     Returns:
         Dict[str, Any]: El nuevo estudiante.
     """
-    # TODO (Santiago): Implementar lógica de creación
-    # 1. Generar un nuevo ID. Pista: puede ser len(estudiantes) + 1
-    #    Formatea el ID como "E" + str(nuevo_id).zfill(3) -> E001
-    # 2. Crear el diccionario:
-    #    nuevo_est = {
-    #        "id_estudiante": nuevo_id_formateado,
-    #        "nombre": nombre,
-    #        "carrera": carrera
-    #    }
-    # 3. Retornar nuevo_est
-    pass
+    # Generar un nuevo ID.
+    # Si hay estudiantes, toma el ID del último, quita la 'E' y suma 1.
+    if not estudiantes:
+        nuevo_id_num = 1
+    else:
+        try:
+            ultimo_id = estudiantes[-1]["id_estudiante"]
+            nuevo_id_num = int(ultimo_id.replace("E", "")) + 1
+        except Exception:
+            # Fallback por si los IDs están corruptos
+            nuevo_id_num = len(estudiantes) + 1
+
+    nuevo_id_formateado = f"E{str(nuevo_id_num).zfill(3)}"
+
+    nuevo_est = {
+        "id_estudiante": nuevo_id_formateado,
+        "nombre": nombre,
+        "carrera": carrera
+    }
+    return nuevo_est
 
 
 def actualizar_estudiante(estudiante: Dict[str, Any], nombre: str, carrera: str) -> None:
@@ -104,12 +106,11 @@ def actualizar_estudiante(estudiante: Dict[str, Any], nombre: str, carrera: str)
         nombre (str): El nuevo nombre.
         carrera (str): La nueva carrera.
     """
-    # TODO (Santiago): Implementar lógica de actualización
-    # Pista: Los diccionarios se pasan por referencia en Python,
-    # así que solo necesitas modificar el que te llega como argumento.
-    # estudiante["nombre"] = nombre
-    # estudiante["carrera"] = carrera
-    pass
+    # Los diccionarios se pasan por referencia, así que se actualiza el original.
+    if nombre:
+        estudiante["nombre"] = nombre
+    if carrera:
+        estudiante["carrera"] = carrera
 
 
 def eliminar_estudiante(estudiantes: List[Dict[str, Any]], id_estudiante: str) -> bool:
@@ -123,12 +124,10 @@ def eliminar_estudiante(estudiantes: List[Dict[str, Any]], id_estudiante: str) -
     Returns:
         bool: True si se eliminó, False si no se encontró.
     """
-    # TODO (Santiago): Implementar lógica de eliminación
-    # 1. Llama a buscar_estudiante_por_id() para encontrar al estudiante.
-    # 2. Si lo encuentras (no es None):
-    #    Usa el método .remove() de la lista para quitarlo.
-    #    Ej: estudiantes.remove(estudiante_encontrado)
-    #    Retorna True
-    # 3. Si no lo encuentras (es None):
-    #    Retorna False
-    pass
+    estudiante_a_eliminar = buscar_estudiante_por_id(estudiantes, id_estudiante)
+
+    if estudiante_a_eliminar:
+        estudiantes.remove(estudiante_a_eliminar)
+        return True
+
+    return False

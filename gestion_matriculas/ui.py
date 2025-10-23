@@ -1,4 +1,5 @@
 from rich.console import Console
+from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt, IntPrompt
 from typing import List, Dict, Any, Tuple
@@ -16,7 +17,8 @@ def mostrar_menu_principal() -> str:
         "3. Gestión de Matrículas\n"
         "4. Salir",
         title="Menú Principal",
-        border_style="blue"
+        border_style="blue",
+        width=60
     ))
     opcion = Prompt.ask("[bold]Seleccione una opción[/bold]", choices=["1", "2", "3", "4"], default="4")
     return opcion
@@ -32,7 +34,8 @@ def mostrar_menu_crud(entidad: str) -> str:
         f"5. Buscar {entidad}\n"
         f"6. Volver al menú principal",
         title=f"Gestión de {entidad}s",
-        border_style="green"
+        border_style="green",
+        width=60
     ))
     opcion = Prompt.ask("[bold]Seleccione una opción[/bold]", choices=["1", "2", "3", "4", "5", "6"], default="6")
     return opcion
@@ -46,7 +49,8 @@ def mostrar_menu_matriculas() -> str:
         "3. Ver estudiantes en un curso\n"
         "4. Volver al menú principal",
         title="Gestión de Matrículas",
-        border_style="yellow"
+        border_style="yellow",
+        width=60
     ))
     opcion = Prompt.ask("[bold]Seleccione una opción[/bold]", choices=["1", "2", "3", "4"], default="4")
     return opcion
@@ -54,88 +58,149 @@ def mostrar_menu_matriculas() -> str:
 
 def mostrar_tabla_estudiantes(estudiantes: List[Dict[str, Any]]) -> None:
     """Muestra una tabla 'rich' con la lista de estudiantes."""
-    # TODO (Daniel): Implementar la tabla
-    # 1. Crear un objeto Table(title="Lista de Estudiantes")
-    # 2. Añadir columnas: table.add_column("ID"), table.add_column("Nombre"), table.add_column("Carrera")
-    # 3. Iterar sobre la lista 'estudiantes':
-    #    table.add_row(est['id_estudiante'], est['nombre'], est['carrera'])
-    # 4. console.print(table)
-    pass
+    if not estudiantes:
+        mostrar_mensaje("No hay estudiantes para mostrar.", "info")
+        return
+
+    table = Table(title="Lista de Estudiantes", border_style="magenta", show_header=True, header_style="bold magenta")
+    table.add_column("ID Estudiante", style="dim", width=12)
+    table.add_column("Nombre", min_width=20)
+    table.add_column("Carrera", min_width=20)
+
+    for est in estudiantes:
+        table.add_row(est['id_estudiante'], est['nombre'], est['carrera'])
+
+    console.print(table)
 
 
 def mostrar_tabla_cursos(cursos: List[Dict[str, Any]]) -> None:
     """Muestra una tabla 'rich' con la lista de cursos."""
-    # TODO (Daniel): Implementar la tabla
-    # Similar a la de estudiantes, pero con "ID Curso", "Nombre Curso", "Créditos"
-    # ¡Recuerda convertir 'creditos' a str() para la tabla! -> str(curso['creditos'])
-    pass
+    if not cursos:
+        mostrar_mensaje("No hay cursos para mostrar.", "info")
+        return
+
+    table = Table(title="Lista de Cursos", border_style="cyan", show_header=True, header_style="bold cyan")
+    table.add_column("ID Curso", style="dim", width=12)
+    table.add_column("Nombre del Curso", min_width=20)
+    table.add_column("Créditos", justify="right")
+
+    for curso in cursos:
+        # Convertir créditos a str para la tabla
+        table.add_row(curso['id_curso'], curso['nombre_curso'], str(curso['creditos']))
+
+    console.print(table)
 
 
 def mostrar_cursos_matriculados(estudiante: Dict[str, Any], cursos: List[Dict[str, Any]],
                                 creditos_totales: int) -> None:
     """Muestra los cursos de un estudiante y el total de créditos (Reto Final)."""
-    # TODO (Daniel): Implementar
-    # 1. Crear una tabla 'Table' para los cursos (ID, Nombre, Créditos)
-    # 2. Llenar la tabla con la lista 'cursos'
-    # 3. Crear un 'Panel' que muestre la tabla y el total de créditos.
-    #    Ej: Panel(
-    #        f"[bold]Estudiante:[/bold] {estudiante['nombre']}\n"
-    #        f"[bold]Carrera:[/bold] {estudiante['carrera']}\n\n"
-    #        table,  # <-- La tabla va aquí adentro
-    #        f"\n[bold]Total Créditos Matriculados:[/bold] {creditos_totales}",
-    #        title="Cursos Matriculados"
-    #    )
-    # 4. Imprimir el panel.
-    pass
+    table = Table(title="Cursos", show_header=True, header_style="bold cyan")
+    table.add_column("ID Curso", style="dim", width=12)
+    table.add_column("Nombre del Curso", min_width=20)
+    table.add_column("Créditos", justify="right")
+
+    if not cursos:
+        table.add_row("[dim]Sin cursos matriculados[/dim]", "", "")
+    else:
+        for curso in cursos:
+            table.add_row(curso['id_curso'], curso['nombre_curso'], str(curso['creditos']))
+
+    panel_content = (
+        f"[bold]Estudiante:[/bold] {estudiante['nombre']}\n"
+        f"[bold]Carrera:[/bold] {estudiante['carrera']}\n\n"
+    )
+
+    console.print(Panel(
+        panel_content,
+        title=f"Cursos Matriculados - {estudiante['id_estudiante']}",
+        border_style="green",
+        width=60
+    ))
+    console.print(table)
+    console.print(f"\n[bold green]Total Créditos Matriculados (último periodo):[/bold green] {creditos_totales}\n")
 
 
 def mostrar_estudiantes_en_curso(curso: Dict[str, Any], estudiantes: List[Dict[str, Any]]) -> None:
     """Muestra los estudiantes inscritos en un curso."""
-    # TODO (Daniel): Implementar
-    # Similar al anterior.
-    # 1. Crear tabla de estudiantes (ID, Nombre, Carrera)
-    # 2. Llenar la tabla
-    # 3. Crear Panel que muestre el nombre del curso y la tabla de estudiantes.
-    pass
+    table = Table(title="Estudiantes Inscritos", show_header=True, header_style="bold magenta")
+    table.add_column("ID Estudiante", style="dim", width=12)
+    table.add_column("Nombre", min_width=20)
+    table.add_column("Carrera", min_width=20)
+
+    if not estudiantes:
+        table.add_row("[dim]Sin estudiantes inscritos[/dim]", "", "")
+    else:
+        for est in estudiantes:
+            table.add_row(est['id_estudiante'], est['nombre'], est['carrera'])
+
+    panel_content = (
+        f"[bold]Curso:[/bold] {curso['nombre_curso']}\n"
+        f"[bold]Créditos:[/bold] {curso['creditos']}\n\n"
+    )
+
+    console.print(Panel(
+        panel_content,
+        title=f"Lista de Estudiantes - {curso['id_curso']}",
+        border_style="green",
+        width=60
+    ))
+    console.print(table)
 
 
 def mostrar_mensaje(mensaje: str, tipo: str = "info") -> None:
-    """Muestra un mensaje de éxito (verde) o error (rojo)."""
+    """Muestra un mensaje de éxito (verde), error (rojo) o info (amarillo)."""
     if tipo == "error":
-        console.print(Panel(f"[bold red]{mensaje}[/bold red]", title="Error", border_style="red"))
-    else:
-        console.print(Panel(f"[bold green]{mensaje}[/bold green]", title="Éxito", border_style="green"))
+        console.print(Panel(f"[bold red]{mensaje}[/bold red]", title="Error", border_style="red", width=60))
+    elif tipo == "info":
+        console.print(Panel(f"[bold yellow]{mensaje}[/bold yellow]", title="Aviso", border_style="yellow", width=60))
+    else:  # "exito"
+        console.print(Panel(f"[bold green]{mensaje}[/bold green]", title="Éxito", border_style="green", width=60))
 
 
 # --- Funciones para pedir datos ---
 
-def pedir_datos_estudiante() -> Tuple[str, str]:
-    """Pide nombre y carrera para un nuevo estudiante."""
-    nombre = Prompt.ask("[bold]Ingrese nombre del estudiante[/bold]")
-    carrera = Prompt.ask("[bold]Ingrese carrera del estudiante[/bold]")
+def pedir_datos_estudiante(actualizando: bool = False) -> Tuple[str, str]:
+    """Pide nombre y carrera. Si actualiza, permite dejar en blanco."""
+    aviso = " (Presione Enter para no cambiar)" if actualizando else ""
+    nombre = Prompt.ask(f"[bold]Ingrese nombre del estudiante[/bold]{aviso}")
+    carrera = Prompt.ask(f"[bold]Ingrese carrera del estudiante[/bold]{aviso}")
     return nombre, carrera
 
 
-def pedir_datos_curso() -> Tuple[str, int]:
-    """Pide nombre y créditos para un nuevo curso."""
-    nombre_curso = Prompt.ask("[bold]Ingrese nombre del curso[/bold]")
-    # IntPrompt valida que sea un número
-    creditos = IntPrompt.ask("[bold]Ingrese créditos del curso[/bold]")
+def pedir_datos_curso(actualizando: bool = False) -> Tuple[str, int]:
+    """Pide nombre y créditos. Si actualiza, permite dejar en blanco."""
+    aviso = " (Presione Enter para no cambiar)" if actualizando else ""
+    nombre_curso = Prompt.ask(f"[bold]Ingrese nombre del curso[/bold]{aviso}")
+
+    if actualizando:
+        # Permite dejar en blanco, en cuyo caso retornamos -1
+        creditos_str = Prompt.ask(f"[bold]Ingrese créditos del curso[/bold]{aviso}", default="-1")
+        try:
+            creditos = int(creditos_str)
+        except ValueError:
+            creditos = -1  # Señal para no actualizar
+    else:
+        # Si está creando, obliga a que sea un número válido >= 0
+        creditos = IntPrompt.ask("[bold]Ingrese créditos del curso[/bold]", default="0")
+        while creditos < 0:
+            mostrar_mensaje("Los créditos deben ser 0 o más.", "error")
+            creditos = IntPrompt.ask("[bold]Ingrese créditos del curso[/bold]", default="0")
+
     return nombre_curso, creditos
 
 
 def pedir_id(entidad: str) -> str:
     """Pide un ID genérico."""
-    return Prompt.ask(f"[bold]Ingrese el ID del {entidad}[/bold]")
+    return Prompt.ask(f"[bold]Ingrese el ID del {entidad}[/bold]").strip().upper()
 
 
 def pedir_datos_matricula() -> Tuple[str, List[str], str]:
     """Pide los datos para una nueva matrícula."""
-    id_estudiante = Prompt.ask("[bold]ID del estudiante a matricular[/bold]")
-    periodo = Prompt.ask("[bold]Periodo académico (Ej. 2025-01)[/bold]")
+    id_estudiante = Prompt.ask("[bold]ID del estudiante a matricular[/bold]").strip().upper()
+    periodo = Prompt.ask("[bold]Periodo académico (Ej. 2025-01)[/bold]", default="2025-01")
 
     cursos_str = Prompt.ask("[bold]IDs de los cursos (separados por coma, Ej. C001,C002)[/bold]")
-    # Convertimos el string "C001,C002" en una lista ["C001", "C002"]
-    lista_ids_cursos = [id.strip() for id in cursos_str.split(',')]
+    # Convertimos el string "C001, C002" en una lista ["C001", "C002"]
+    lista_ids_cursos = [id.strip().upper() for id in cursos_str.split(',') if id.strip()]
 
     return id_estudiante, lista_ids_cursos, periodo

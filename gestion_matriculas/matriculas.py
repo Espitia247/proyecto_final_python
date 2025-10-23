@@ -1,5 +1,5 @@
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # Constante para el nombre del archivo
 FILE_PATH = "data/matriculas.json"
@@ -61,17 +61,24 @@ def matricular_estudiante(
     Returns:
         Dict[str, Any]: El nuevo objeto de matrícula.
     """
-    # TODO (Daniel): Implementar lógica de creación de matrícula
-    # 1. Generar un nuevo ID de matrícula. Ej: "M" + str(len(matriculas) + 1).zfill(4) -> M0001
-    # 2. Crear el diccionario:
-    #    nueva_matricula = {
-    #        "id_matricula": nuevo_id,
-    #        "id_estudiante": id_estudiante,
-    #        "id_cursos": lista_ids_cursos,
-    #        "periodo_academico": periodo
-    #    }
-    # 3. Retornar nueva_matricula
-    pass
+    if not matriculas:
+        nuevo_id_num = 1
+    else:
+        try:
+            ultimo_id = matriculas[-1]["id_matricula"]
+            nuevo_id_num = int(ultimo_id.replace("M", "")) + 1
+        except Exception:
+            nuevo_id_num = len(matriculas) + 1
+
+    nuevo_id = f"M{str(nuevo_id_num).zfill(4)}"
+
+    nueva_matricula = {
+        "id_matricula": nuevo_id,
+        "id_estudiante": id_estudiante,
+        "id_cursos": lista_ids_cursos,
+        "periodo_academico": periodo
+    }
+    return nueva_matricula
 
 
 def obtener_cursos_por_estudiante(
@@ -91,13 +98,24 @@ def obtener_cursos_por_estudiante(
     Returns:
         List[Dict[str, Any]]: Una lista de diccionarios de los cursos encontrados.
     """
-    # TODO (Daniel): Implementar lógica
+    ids_cursos_estudiante = set()  # Usamos un set para evitar duplicados
+
     # 1. Buscar en matriculas_db las matrículas que coincidan con id_estudiante.
-    #    (Puede haber varias matrículas de diferentes periodos).
-    # 2. Recolectar todos los 'id_cursos' de esas matrículas en una sola lista de IDs.
+    for matricula in matriculas_db:
+        if matricula["id_estudiante"] == id_estudiante:
+            # 2. Recolectar todos los 'id_cursos'
+            ids_cursos_estudiante.update(matricula["id_cursos"])
+
+    cursos_encontrados = []
     # 3. Buscar en cursos_db los cursos completos que coincidan con esos IDs.
+    for id_curso in ids_cursos_estudiante:
+        for curso in cursos_db:
+            if curso["id_curso"] == id_curso:
+                cursos_encontrados.append(curso)
+                break  # Pasamos al siguiente id_curso
+
     # 4. Retornar la lista de diccionarios de cursos completos.
-    pass
+    return cursos_encontrados
 
 
 def obtener_estudiantes_por_curso(
@@ -117,13 +135,25 @@ def obtener_estudiantes_por_curso(
     Returns:
         List[Dict[str, Any]]: Una lista de diccionarios de los estudiantes encontrados.
     """
-    # TODO (Daniel): Implementar lógica
+    ids_estudiantes_curso = set()
+
     # 1. Iterar sobre matriculas_db.
-    # 2. Si 'id_curso' está en la lista 'id_cursos' de una matrícula:
-    #    Guardar el 'id_estudiante' de esa matrícula.
-    # 3. Buscar en estudiantes_db los estudiantes completos que coincidan con los IDs guardados.
+    for matricula in matriculas_db:
+        # 2. Si 'id_curso' está en la lista 'id_cursos' de una matrícula:
+        if id_curso in matricula["id_cursos"]:
+            # Guardar el 'id_estudiante' de esa matrícula.
+            ids_estudiantes_curso.add(matricula["id_estudiante"])
+
+    estudiantes_encontrados = []
+    # 3. Buscar en estudiantes_db los estudiantes completos
+    for id_est in ids_estudiantes_curso:
+        for estudiante in estudiantes_db:
+            if estudiante["id_estudiante"] == id_est:
+                estudiantes_encontrados.append(estudiante)
+                break
+
     # 4. Retornar la lista de diccionarios de estudiantes completos.
-    pass
+    return estudiantes_encontrados
 
 
 def calcular_total_creditos(
@@ -143,12 +173,30 @@ def calcular_total_creditos(
     Returns:
         int: El total de créditos.
     """
-    # TODO (Daniel): Implementar lógica del Reto Final
+    matricula_reciente = None
+
     # 1. Encontrar la matrícula MÁS RECIENTE del estudiante.
-    #    (Puedes asumir que la última en la lista es la más reciente, o buscar por 'periodo_academico').
+    #    (Asumimos que la última en la lista es la más reciente para ese estudiante)
+    for matricula in reversed(matriculas_db):
+        if matricula["id_estudiante"] == id_estudiante:
+            matricula_reciente = matricula
+            break
+
+    if not matricula_reciente:
+        return 0  # El estudiante no tiene matrículas
+
     # 2. Obtener la lista 'id_cursos' de esa matrícula.
+    ids_cursos_matriculados = matricula_reciente["id_cursos"]
+    total_creditos = 0
+
     # 3. Iterar sobre esa lista de IDs.
-    # 4. Por cada ID, buscar el curso en cursos_db.
-    # 5. Sumar el valor de 'creditos' (¡Mayerly ya te lo da como 'int'!).
+    for id_cur in ids_cursos_matriculados:
+        # 4. Por cada ID, buscar el curso en cursos_db.
+        for curso in cursos_db:
+            if curso["id_curso"] == id_cur:
+                # 5. Sumar el valor de 'creditos'
+                total_creditos += curso.get("creditos", 0)  # .get() por seguridad
+                break
+
     # 6. Retornar la suma total.
-    pass
+    return total_creditos
